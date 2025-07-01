@@ -13,7 +13,7 @@ namespace WebApplication1.Entity
     {
         Male=0,
         Female=1,
-        Unknown=2
+        Secrecy=2
     }
 
     public class User
