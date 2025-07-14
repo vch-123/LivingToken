@@ -18,16 +18,16 @@ namespace WebApplication1.Entity
 
     public class User
     {
-        public required int Id { get;set; }      
+        public required Guid Id { get;set; }      
         public required string UserName { get;set; }     
-        public required string Salt { get; set; }
-        public required string Password { get; set; }
+        public required string PasswordHash { get; set; }
         public required string Email { get; set; }
-        public required string Signature { get; set; }
-        public string? PhoneNumber { get; set; }
+        public string Signature { get; set; } //个性签名
+        public required int Level { get; set; }
+        public string? PhoneNumber { get; set; } //手机号
         public UserIdentityEnum UserIdentity { get; set; }
         public GenderEnum Gender { get; set; }
-        public DateTime RegistrationTime { get; set; } = DateTime.UtcNow;
-        public DateTime LastOnlineTime { get;set; } = DateTime.UtcNow;
+        public DateTime RegistrationTime { get; set; }
+        public DateTime? LastOnlineTime { get;set; } 
     }
 }

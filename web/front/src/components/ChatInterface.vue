@@ -31,6 +31,10 @@
         />
         <button @click="sendMessage" class="send-button">发送</button>
       </div>
+      <div class="register-link">
+        <router-link to="/register">注册新用户</router-link>
+      </div>
+      <button @click="goToXX" class="avatar-button"></button>
     </div>
   </div>
 </template>
@@ -62,12 +66,27 @@ export default {
   },
     goToUserInfo() {
       this.$router.push('/user-info');
+    },
+    goToXX(){
+      this.$router.push('/register');
     }
   }
 }
 </script>
 
 <style scoped>
+.register-link {
+  margin: 10px;
+  text-align: center;
+}
+.register-link a {
+  color: #4a90e2;
+  text-decoration: none;
+}
+.register-link a:hover {
+  text-decoration: underline;
+}
+
 .chat-interface {
   display: flex;
   height: 100vh;
