@@ -8,7 +8,7 @@ namespace WebApplication1.Service
     {
         private readonly IMemoryCache _cache;
         private readonly ConcurrentDictionary<string, byte> _locks = new();
-
+        
         private const int CodeLength = 6;
         private static readonly TimeSpan ExpireAfter = TimeSpan.FromMinutes(5);//缓存到期时间
 

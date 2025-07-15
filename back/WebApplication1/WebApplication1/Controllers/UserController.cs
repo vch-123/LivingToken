@@ -6,6 +6,8 @@ using WebApplication1.Entity;
 using WebApplication1.Service;
 using WebApplication1.Entity;
 using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Identity;
+using static WebApplication1.Dto.UserDto;
 
 namespace WebApplication1.Controllers;
 
@@ -33,13 +35,26 @@ public class UserController:ControllerBase
         };
     }
 
+    [HttpPost]
+    [Route("login")]
+    public IActionResult Login(UserLoginDto userLoginDto)
+    {
+        return new List<int>()
+        {
+            1, 2, 3,4,5
+        };
+    }
+
+
+
     [AllowAnonymous]
     [HttpGet("checkUserNameIsExisted/{userName}")]
     public bool CheckUserNameIsExisted(string userName)
     {
         return _userService.CheckUserNameIsExisted(userName);
     }
-    
+
+
     [AllowAnonymous]
     [HttpPost("addUser")]
     public bool AddUser(UserDto.UserRegistrationDto userRegistrationDto)
@@ -49,18 +64,21 @@ public class UserController:ControllerBase
 
     [AllowAnonymous]
     [HttpPost("email")]
-    public bool AddUser(string message)
+    public bool AddUser([FromBody] SendCodeRequest req)
     {
-        _emailService.SendEmailAsync("tutumax@qq.com", "1132528903@qq.com", "fiafih", "加我免费领", new List<IFormFile>());
+        //_emailService.SendEmailAsync("tutumax@qq.com", req.Email, "fiafih", "加我免费领", new List<IFormFile>());
+        //return true;
         return true;
     }
 
     [HttpPost("send-code")]
     public IActionResult SendCode([FromBody] SendCodeRequest req)
     {
-        var code = _verificationCodeService.GenerateCode(req.Email);
-        // TODO: 这里可以真正发邮件，或仅返回给前端做演示
-        return Ok(new { Code = code });
+        _emailService.SendEmailAsync("tutumax@qq.com", req.Email, "fiafih", "加我免费领", new List<IFormFile>());
+        return Ok();
+        //var code = _verificationCodeService.GenerateCode(req.Email);
+        //// TODO: 这里可以真正发邮件，或仅返回给前端做演示
+        //return Ok(new { Code = code });
     }
 
     // 2. 注册并校验验证码

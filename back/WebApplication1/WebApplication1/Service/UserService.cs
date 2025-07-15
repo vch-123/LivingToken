@@ -11,8 +11,7 @@ public class UserService
         _dbContext = dbContext;
     }
     public bool CheckUserNameIsExisted(string userName)
-    {
-        return true;
+    { 
         //通过any
         return _dbContext.Users.Any(u => u.UserName == userName);
     }
@@ -27,7 +26,7 @@ public class UserService
             PasswordHash = passwordHash,
             Email = userRegistrationDto.Email,
             Level = 0,
-            PhoneNumber = userRegistrationDto.PhoneNumber,
+            PhoneNumber = "132",
             UserIdentity = UserIdentityEnum.User,
             Gender = userRegistrationDto.Gender,
             RegistrationTime = DateTime.Now,

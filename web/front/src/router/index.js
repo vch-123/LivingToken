@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import ChatInterface from '../components/ChatInterface.vue';
 import UserInfo from '../components/UserInfo.vue';
 import Registration from '../components/RegistrationAS.vue'; // 引入注册组件
+import Login from '../components/LoginPage.vue';
 
 const routes = [
   {
@@ -18,6 +19,11 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: Registration // 添加注册路由
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login // 添加注册路由
   }
 ];
 
