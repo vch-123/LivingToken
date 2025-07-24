@@ -53,7 +53,7 @@ builder.Services.AddMemoryCache();   // .NET 8 内置
 
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<EmailService>();
-builder.Services.AddScoped<VerificationCodeService>();
+builder.Services.AddSingleton<VerificationCodeService>();
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
 {

@@ -83,11 +83,9 @@
                 <template v-else>发送验证码</template>
               </button>
             </div>
-            <!-- 发送验证码错误提示 -->
             <div v-if="sendCodeError" class="validation-message" style="margin-top:8px;">
               {{ sendCodeError }}
             </div>
-            <!-- 发送验证码成功提示 -->
             <div v-if="sendCodeSuccess" class="success-message" style="margin-top:8px;">
               验证码已发送，请检查邮箱
             </div>
@@ -95,10 +93,10 @@
 
           <!-- 验证码 -->
           <div class="form-group">
-            <label for="code">验证码</label>
+            <label for="verificationCode">验证码</label>
             <input
-              id="code"
-              v-model="user.Code"
+              id="verificationCode"
+              v-model="user.VerificationCode"
               type="text"
               placeholder="请输入验证码"
             />
@@ -132,7 +130,7 @@ export default {
         Email: "",
         Password: "",
         Gender: 0,
-        Code: "",
+        VerificationCode: "",
       },
       confirmPassword: "",
       usernameExists: null,
@@ -140,8 +138,8 @@ export default {
       sendingCode: false,
       codeCooldown: 0,
       cooldownTimer: null,
-      sendCodeError: "", // 错误消息
-      sendCodeSuccess: false, // 成功提示开关
+      sendCodeError: "",
+      sendCodeSuccess: false,
     };
   },
   computed: {
@@ -161,7 +159,7 @@ export default {
         !this.confirmPassword ||
         this.passwordMismatch ||
         this.user.Gender == null ||
-        !this.user.Code
+        !this.user.VerificationCode
       );
     },
   },
@@ -196,9 +194,9 @@ export default {
       this.sendCodeSuccess = false;
       try {
         await axios.post("https://localhost:7201/User/send-code", {
+          userName: this.user.UserName,
           email: this.user.Email,
         });
-        // 成功时显示成功提示并开始倒计时
         this.sendCodeSuccess = true;
         this.codeCooldown = 20;
         this.cooldownTimer = setInterval(() => {
@@ -208,7 +206,7 @@ export default {
           if (this.codeCooldown === 0) {
             clearInterval(this.cooldownTimer);
             this.cooldownTimer = null;
-            this.sendCodeSuccess = false; // 倒计时结束，隐藏成功提示
+            this.sendCodeSuccess = false;
           }
         }, 1000);
       } catch (error) {
@@ -219,21 +217,30 @@ export default {
       }
     },
     async registerUser() {
-      if (this.isRegisterButtonDisabled) return;
+  if (this.isRegisterButtonDisabled) return;
 
-      try {
-        await axios.post(
-          "https://localhost:7201/User/addUser",
-          JSON.stringify(this.user),
-          { headers: { "Content-Type": "application/json" } }
-        );
-        alert("注册成功！");
-        this.$router.push("/login");
-      } catch (error) {
-        console.error("注册失败:", error);
-        alert("注册失败，请稍后重试。");
-      }
-    },
+  try {
+    const response = await axios.post(
+      "https://localhost:7201/User/addUser",
+      JSON.stringify(this.user),
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    // 判断后端返回的内容
+    const result = response.data;
+    if (result === true || result?.success === true) {
+      alert("注册成功！");
+      this.$router.push("/login");
+    } else {
+      const msg = result?.message || "注册失败，用户名或验证码无效";
+      alert(msg);
+      // 不跳转，保留表单
+    }
+  } catch (error) {
+    console.error("注册失败:", error);
+    alert("注册失败，请稍后重试。");
+  }
+},
   },
   beforeUnmount() {
     if (this.cooldownTimer) {
@@ -245,46 +252,41 @@ export default {
 </script>
 
 <style scoped>
+/* 样式部分无改动 */
 .registration-container {
   display: flex;
   height: 100vh;
-  background-color: #e7e6e4; /* 莫兰迪浅背景 */
+  background-color: #e7e6e4;
 }
-
 .main-content {
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
 }
-
 .registration-card {
   background-color: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* 增强阴影 */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   padding: 32px;
   width: 100%;
   max-width: 420px;
 }
-
 h2 {
   text-align: center;
   margin-bottom: 24px;
   color: #333;
   font-weight: 600;
 }
-
 .form-group {
   margin-bottom: 20px;
 }
-
 label {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
   color: #444;
 }
-
 input[type="text"],
 input[type="email"],
 input[type="password"] {
@@ -296,28 +298,23 @@ input[type="password"] {
   font-size: 14px;
   background-color: #f9f9f9;
 }
-
 .gender-group {
   display: flex;
   gap: 15px;
   margin-top: 5px;
 }
-
 .gender-group label {
   margin-bottom: 0;
   display: flex;
   align-items: center;
 }
-
 .gender-group input {
   margin-right: 5px;
 }
-
 .email-group .email-input-group {
   display: flex;
   gap: 10px;
 }
-
 .send-code-btn {
   padding: 8px 12px;
   background-color: #4a90e2;
@@ -329,16 +326,13 @@ input[type="password"] {
   white-space: nowrap;
   transition: background-color 0.3s;
 }
-
 .send-code-btn:hover {
   background-color: #3a7bc8;
 }
-
 .send-code-btn:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
-
 .validation-message {
   margin-top: 6px;
   padding: 8px 12px;
@@ -349,8 +343,6 @@ input[type="password"] {
   border: 1px solid #f5c6cb;
   border-radius: 6px;
 }
-
-/* 成功提示样式 */
 .success-message {
   margin-top: 6px;
   padding: 8px 12px;
@@ -361,13 +353,11 @@ input[type="password"] {
   border: 1px solid #c3e6cb;
   border-radius: 6px;
 }
-
 .button-group {
   display: flex;
   justify-content: center;
   margin-top: 24px;
 }
-
 .register-button {
   background-color: #4a90e2;
   color: white;
@@ -378,12 +368,10 @@ input[type="password"] {
   font-size: 16px;
   transition: background-color 0.3s, box-shadow 0.3s;
 }
-
 .register-button:hover {
   background-color: #3a7bc8;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
-
 .register-button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;

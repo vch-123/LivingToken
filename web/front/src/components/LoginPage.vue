@@ -52,6 +52,7 @@
 
 <script>
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import SideBar from './SideBar.vue';
 
 export default {
@@ -71,26 +72,50 @@ export default {
       this.$router.push('/user-info');
     },
     async login() {
+      this.loginError = '';
       try {
         const response = await axios.post('https://localhost:7201/User/login', {
           usernameOrEmail: this.loginForm.usernameOrEmail,
           password: this.loginForm.password
         });
 
-        // 假设 response.data 是用户信息或 token
-        const userData = response.data;
-        localStorage.setItem('user', JSON.stringify(userData));
+        if (response.data === true) {
+          // ✅ 成功提示
+          await Swal.fire({
+            icon: 'success',
+            title: '登录成功',
+            text: '欢迎回来！正在跳转...',
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
 
-        // 跳转页面
-        this.$router.push('/user-info');
+          this.$router.push('/user-info');
+        } else {
+          // ❌ 失败提示
+          this.loginError = '用户名或密码错误，请重试';
+          Swal.fire({
+            icon: 'error',
+            title: '登录失败',
+            text: '请检查您的用户名或密码',
+            confirmButtonColor: '#d33'
+          });
+        }
       } catch (error) {
-        console.error('登录失败:', error);
-        this.loginError = '用户名或密码错误，请重试';
+        console.error('请求异常:', error);
+        this.loginError = '网络错误，请稍后重试';
+        Swal.fire({
+          icon: 'error',
+          title: '登录异常',
+          text: '网络请求失败或服务器错误',
+          confirmButtonColor: '#d33'
+        });
       }
     }
   }
 };
 </script>
+
 
 <style scoped>
 .login-container {
@@ -109,7 +134,7 @@ export default {
 .login-card {
   background-color: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* 加强阴影 */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   padding: 32px;
   width: 100%;
   max-width: 400px;

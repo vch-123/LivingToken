@@ -33,6 +33,8 @@
       </div>
       <div class="register-link">
         <router-link to="/register">注册新用户</router-link>
+        <br />
+       <router-link to="/login">已有账号？去登录</router-link>
       </div>
       <button @click="goToXX" class="avatar-button"></button>
     </div>
