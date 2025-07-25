@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from '@/api/http';
 import Swal from 'sweetalert2';
 import SideBar from './SideBar.vue';
 
@@ -74,13 +74,15 @@ export default {
     async login() {
       this.loginError = '';
       try {
-        const response = await axios.post('https://localhost:7201/User/login', {
+        // 发送账号密码，后端返回格式：{ success: true, token: 'jwt字符串' }
+        const response = await axios.post('/User/login', {
           usernameOrEmail: this.loginForm.usernameOrEmail,
           password: this.loginForm.password
         });
 
-        if (response.data === true) {
-          // ✅ 成功提示
+        if (response.data.success) {
+          localStorage.setItem('jwt_token', response.data.token);
+
           await Swal.fire({
             icon: 'success',
             title: '登录成功',
@@ -92,7 +94,6 @@ export default {
 
           this.$router.push('/user-info');
         } else {
-          // ❌ 失败提示
           this.loginError = '用户名或密码错误，请重试';
           Swal.fire({
             icon: 'error',
@@ -116,12 +117,11 @@ export default {
 };
 </script>
 
-
 <style scoped>
 .login-container {
   display: flex;
   height: 100vh;
-  background-color: #e7e6e4; /* 莫兰迪浅灰 */
+  background-color: #e7e6e4;
 }
 
 .main-content {

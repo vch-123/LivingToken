@@ -8,6 +8,11 @@ using WebApplication1.Entity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Identity;
 using static WebApplication1.Dto.UserDto;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace WebApplication1.Controllers;
 
@@ -16,14 +21,16 @@ namespace WebApplication1.Controllers;
 [ApiExplorerSettings(GroupName = "user")]
 public class UserController:ControllerBase
 {
+    private readonly JwtSettings _jwtSettings;
     private readonly UserService _userService;
     private readonly EmailService _emailService;
     private readonly VerificationCodeService _verificationCodeService;
-    public UserController(UserService userService,EmailService emailService,VerificationCodeService verificationCodeService)
+    public UserController(UserService userService,EmailService emailService,VerificationCodeService verificationCodeService, IOptions<JwtSettings> jwtSettings)
     {
         _userService = userService;
         _emailService = emailService;
         _verificationCodeService = verificationCodeService;
+        _jwtSettings = jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
     }
     [HttpGet]
     [Route("user-by-name/{id}")]
@@ -55,6 +62,33 @@ public class UserController:ControllerBase
     }
 
 
+    private string GenerateJwtToken(string usernameOrEmail)
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.Name, usernameOrEmail),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+
+
+
+
+
     [AllowAnonymous]
     [HttpPost("addUser")]
     public bool AddUser(UserDto.UserRegistrationDto userRegistrationDto)
@@ -73,16 +107,16 @@ public class UserController:ControllerBase
 
     [AllowAnonymous]
     [HttpPost("login")]
-    public bool UserLogin([FromBody] UserLoginDto dto)
+    public IActionResult UserLogin([FromBody] UserLoginDto dto)
     {
-        int td = new Random().Next(0, 2);
-        if (td == 0) return true;
-        else return false;
-        if (_userService.LoginOk(dto))
+        if (2==1)
         {
-            return true;
-        }       
-        return false;
+            var token = GenerateJwtToken(dto.UserNameOrEmail);
+            return Ok(new { success = true, token });
+        }
+
+        return Ok(new { success = false, message = "用户名或密码错误" });
+
     }
 
     [HttpPost("send-code")]

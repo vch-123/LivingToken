@@ -18,4 +18,12 @@ public class UserDto
         public string UserNameOrEmail { get; set; }
         public string Password { get; set; }
     }
+
+    public class JwtSettings
+    {
+        public string SecretKey { get; set; } = "ThisIsASecretKey1234567890"; // ø…–¥»Î appsettings.json
+        public string Issuer { get; set; } = "MyApp";
+        public string Audience { get; set; } = "MyAppUser";
+        public int ExpireMinutes { get; set; } = 60;
+    }
 }
