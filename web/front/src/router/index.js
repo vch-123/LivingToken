@@ -3,6 +3,7 @@ import ChatInterface from '../components/ChatInterface.vue';
 import UserInfo from '../components/UserInfo.vue';
 import Registration from '../components/RegistrationAS.vue'; // 引入注册组件
 import Login from '../components/LoginPage.vue';
+import MonsterBattle from '@/components/MonsterBattle.vue';
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login // 添加注册路由
+  },
+  {
+    path: '/monsterBattle',
+    name: 'MonsterBattle',
+    component: MonsterBattle // 添加注册路由
   }
 ];
 

@@ -26,13 +26,13 @@
         <span class="icon">📚</span>
         <span class="text">学术搜索</span>
       </div>
-      <div class="nav-item">
+      <div class="nav-item" @click="goToMonsterBattle">
         <span class="icon">💬</span>
-        <span class="text">Kimi探索版</span>
+        <span class="text">打怪兽</span>
       </div>
       <div class="nav-item" @click="goToLogin">
   <span class="icon">📋</span>
-  <span class="text">历史对话</span>
+  <span class="text">登录</span>
 </div>
 
     </div>
@@ -59,6 +59,9 @@ export default {
   ...mapActions(['toggleSidebar', 'setSidebarCollapsed']),
   goToUserInfo() {
     this.$emit('goToUserInfo');
+  },
+  goToMonsterBattle(){
+this.$router.push('/monsterBattle')
   },
   goToLogin() {
     this.$router.push('/login');

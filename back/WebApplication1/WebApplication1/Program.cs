@@ -123,6 +123,7 @@ app.UseAuthorization();
 
 // 映射 SignalR Hub，路径大小写要和前端完全一致
 app.MapHub<ChatHub>("/chatHub");
+app.MapHub<MonsterHub>("/monsterHub");
 
 // 映射 API 控制器
 app.MapControllers();
