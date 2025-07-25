@@ -30,10 +30,11 @@
         <span class="icon">💬</span>
         <span class="text">Kimi探索版</span>
       </div>
-      <div class="nav-item">
-        <span class="icon">📋</span>
-        <span class="text">历史对话</span>
-      </div>
+      <div class="nav-item" @click="goToLogin">
+  <span class="icon">📋</span>
+  <span class="text">历史对话</span>
+</div>
+
     </div>
   </div>
 </template>
@@ -55,11 +56,15 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['toggleSidebar', 'setSidebarCollapsed']),
-    goToUserInfo() {
-      this.$emit('goToUserInfo');
-    }
+  ...mapActions(['toggleSidebar', 'setSidebarCollapsed']),
+  goToUserInfo() {
+    this.$emit('goToUserInfo');
+  },
+  goToLogin() {
+    this.$router.push('/login');
   }
+}
+
 }
 </script>
 

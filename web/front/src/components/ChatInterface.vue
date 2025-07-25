@@ -1,13 +1,9 @@
 <template>
   <div class="chat-interface">
-    <!-- 左侧栏 -->
     <SideBar @goToUserInfo="goToUserInfo" />
-    <!-- 主内容区域 -->
     <div class="main-content">
       <div class="chat-header">
-        <div class="chat-title">
-          <h3>对话</h3>
-        </div>
+        <div class="chat-title"><h3>聊天广场</h3></div>
         <div class="chat-actions">
           <button class="action-button" title="设置">⚙️</button>
           <button class="action-button" title="收藏">⭐</button>
@@ -16,84 +12,138 @@
           </button>
         </div>
       </div>
+
       <div class="chat-messages">
-        <div class="message system-message">
-          <p>{{ message }}</p>
+        <div
+          v-for="(msg, index) in messages"
+          :key="index"
+          class="message"
+          :class="msg.username === currentUser ? 'user-message' : 'system-message'"
+        >
+          <p><strong>{{ msg.username }}</strong>: {{ msg.content }}</p>
         </div>
-        <!-- 其他消息 -->
       </div>
+
       <div class="chat-input">
         <input
           type="text"
           v-model="inputMessage"
           @keyup.enter="sendMessage"
+          :disabled="!isAuthenticated"
           placeholder="请输入内容..."
         />
-        <button @click="sendMessage" class="send-button">发送</button>
+        <button @click="sendMessage" class="send-button" :disabled="!isAuthenticated">
+          {{ isAuthenticated ? '发送' : '登录后可发送' }}
+        </button>
       </div>
-      <div class="register-link">
-        <router-link to="/register">注册新用户</router-link>
-        <br />
-       <router-link to="/login">已有账号？去登录</router-link>
+
+      <div class="register-link" v-if="!isAuthenticated">
+        <router-link to="/register">注册新用户</router-link><br />
+        <router-link to="/login">已有账号？去登录</router-link>
       </div>
-      <button @click="goToXX" class="avatar-button"></button>
     </div>
   </div>
 </template>
 
+
 <script>
-// 引入 SideBar 组件
 import SideBar from './SideBar.vue';
+import * as signalR from '@microsoft/signalr';
 import { mapState } from 'vuex';
 
+function parseJwt(token) {
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split('')
+      .map(c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+      .join('')
+  );
+
+  return JSON.parse(jsonPayload);
+}
+
 export default {
-  components: {
-    SideBar
-  },
+  components: { SideBar },
   data() {
     return {
-      message: "无限进步。",
-      inputMessage: "",
+      connection: null,
+      inputMessage: '',
+      messages: [],
+      currentUser: '', // 当前登录用户名
     };
   },
-  methods: {
-    sendMessage() {
-      if (this.inputMessage.trim()) {
-        console.log("发送消息:", this.inputMessage);
-        this.inputMessage = "";
-      }
+  computed: {
+    ...mapState(['isSidebarCollapsed']),
+    isAuthenticated() {
+      return !!localStorage.getItem('jwt_token');
     },
-    computed: {
-    ...mapState(['isSidebarCollapsed'])
   },
+  mounted() {
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+      try {
+  const payload = parseJwt(token);
+  const nameClaim = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name';
+  this.currentUser = payload[nameClaim] || '匿名';
+} catch (err) {
+  console.error('解析 token 失败', err);
+}
+
+    }
+
+    this.connection = new signalR.HubConnectionBuilder()
+      .withUrl('https://localhost:7201/chatHub', {
+    accessTokenFactory: () => localStorage.getItem('jwt_token')
+})
+      .withAutomaticReconnect()
+      .build();
+
+    this.connection.start().then(() => {
+      console.log('✅ SignalR连接成功');
+    }).catch(err => {
+      console.error('❌ SignalR连接失败', err);
+    });
+
+    this.connection.on('ReceiveMessage', (username, content) => {
+  console.log('🔍 当前用户:', this.currentUser);
+  console.log('🟡 收到消息的用户名:', username);
+  console.log('是否相等:', username === this.currentUser);
+
+  this.messages.push({ username, content });
+});
+
+
+    this.connection.on('ReceiveSystemMessage', (msg) => {
+      this.messages.push({ username: '系统', content: msg });
+    });
+  },
+  methods: {
     goToUserInfo() {
       this.$router.push('/user-info');
     },
-    goToXX(){
-      this.$router.push('/register');
+    sendMessage() {
+      if (this.inputMessage.trim() && this.connection && this.isAuthenticated) {
+        this.connection.invoke('SendMessage', this.inputMessage)
+          .then(() => {
+            this.inputMessage = '';
+          })
+          .catch(err => {
+            console.error('发送失败', err);
+          });
+      }
     }
   }
 }
 </script>
 
-<style scoped>
-.register-link {
-  margin: 10px;
-  text-align: center;
-}
-.register-link a {
-  color: #4a90e2;
-  text-decoration: none;
-}
-.register-link a:hover {
-  text-decoration: underline;
-}
 
+<style scoped>
 .chat-interface {
   display: flex;
   height: 100vh;
 }
-
 .main-content {
   flex: 1;
   display: flex;
@@ -101,7 +151,6 @@ export default {
   background-color: #f5f5f5;
   color: #333;
 }
-
 .chat-header {
   padding: 15px;
   border-bottom: 1px solid #ddd;
@@ -110,12 +159,10 @@ export default {
   align-items: center;
   background-color: #fff;
 }
-
 .chat-actions {
   display: flex;
   gap: 10px;
 }
-
 .action-button {
   background: transparent;
   border: none;
@@ -124,24 +171,17 @@ export default {
   font-size: 16px;
   transition: color 0.2s ease;
 }
-
 .avatar-button {
   background: transparent;
   border: none;
   cursor: pointer;
 }
-
 .avatar {
   width: 30px;
   height: 30px;
   border-radius: 50%;
   object-fit: cover;
 }
-
-.action-button:hover {
-  color: #333;
-}
-
 .chat-messages {
   flex: 1;
   padding: 15px;
@@ -151,30 +191,26 @@ export default {
   flex-direction: column;
   gap: 15px;
 }
-
 .message {
   max-width: 70%;
   padding: 10px 15px;
   border-radius: 18px;
+  word-break: break-word;
 }
-
 .system-message {
   background-color: #f0f0f0;
   align-self: flex-start;
 }
-
 .user-message {
   background-color: #4a90e2;
   color: white;
   align-self: flex-end;
 }
-
 .message p {
   margin: 0;
   font-size: 14px;
   line-height: 1.4;
 }
-
 .chat-input {
   padding: 15px;
   border-top: 1px solid #ddd;
@@ -182,7 +218,6 @@ export default {
   align-items: center;
   background-color: #fff;
 }
-
 .chat-input input {
   flex: 1;
   padding: 10px 15px;
@@ -195,11 +230,9 @@ export default {
   outline: none;
   transition: border-color 0.2s ease;
 }
-
 .chat-input input:focus {
   border-color: #4a90e2;
 }
-
 .send-button {
   padding: 10px 15px;
   border: none;
@@ -210,8 +243,22 @@ export default {
   font-size: 14px;
   transition: background-color 0.2s ease;
 }
-
 .send-button:hover {
   background-color: #3a7bc8;
+}
+.send-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+.register-link {
+  margin: 10px;
+  text-align: center;
+}
+.register-link a {
+  color: #4a90e2;
+  text-decoration: none;
+}
+.register-link a:hover {
+  text-decoration: underline;
 }
 </style>

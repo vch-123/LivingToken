@@ -109,7 +109,7 @@ public class UserController:ControllerBase
     [HttpPost("login")]
     public IActionResult UserLogin([FromBody] UserLoginDto dto)
     {
-        if (2==1)
+        if (1==1)
         {
             var token = GenerateJwtToken(dto.UserNameOrEmail);
             return Ok(new { success = true, token });

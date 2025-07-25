@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@microsoft/signalr": "^8.0.7",
     "axios": "^1.10.0",
     "core-js": "^3.8.3",
     "sweetalert2": "^11.22.2",
