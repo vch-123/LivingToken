@@ -1,13 +1,19 @@
-﻿var original = new Enemy
+﻿class Program
 {
-    Name = "Orc",
-    Weapon = new Weapon { Name = "Axe" }
-};
+    static void Main()
+    {
+        IDevice sony = new SonyTV();
+        RemoteControl remote = new AdvancedRemoteControl(sony);
+        remote.TurnOn();
+        remote.SetChannel(5);
+        remote.TurnOff();
 
-var clone = original.Clone();
+        Console.WriteLine();
 
-clone.Name = "Troll";
-clone.Weapon.Name = "Sword";
-
-Console.WriteLine(original.Name);  // Orc
-Console.WriteLine(original.Weapon.Name); // Sword ❗（浅拷贝问题）
+        IDevice samsung = new SamsungTV();
+        remote = new AdvancedRemoteControl(samsung);
+        remote.TurnOn();
+        remote.SetChannel(99);
+        remote.TurnOff();
+    }
+}
