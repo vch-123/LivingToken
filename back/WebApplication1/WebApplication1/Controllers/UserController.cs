@@ -53,7 +53,7 @@ public class UserController:ControllerBase
     //}
 
 
-
+    [Authorize]
     [AllowAnonymous]
     [HttpGet("checkUserNameIsExisted/{userName}")]
     public bool CheckUserNameIsExisted(string userName)

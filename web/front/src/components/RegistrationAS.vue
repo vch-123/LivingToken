@@ -118,7 +118,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from '@/api/http';
 import SideBar from "./SideBar.vue";
 
 export default {
