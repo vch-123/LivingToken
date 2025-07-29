@@ -2,15 +2,24 @@
 {
     static void Main()
     {
-        var forest = new List<Tree>();
+        var character = new Character();
 
-        forest.Add(new Tree(10, 20, TreeFactory.GetTreeType("松树", "绿色", "粗糙")));
-        forest.Add(new Tree(15, 25, TreeFactory.GetTreeType("松树", "绿色", "粗糙")));
-        forest.Add(new Tree(30, 40, TreeFactory.GetTreeType("橡树", "深绿色", "光滑")));
+        character.Update();
+        character.HandleInput("walk");
+        character.Update();
 
-        foreach (var tree in forest)
-        {
-            tree.Draw();
-        }
+        character.HandleInput("run");
+        character.Update();
+
+        character.HandleInput("jump");
+        character.Update();
+        character.Update();
+        character.Update();
+
+        character.HandleInput("crouch");
+        character.Update();
+
+        character.HandleInput("rest");
+        character.Update();
     }
 }
