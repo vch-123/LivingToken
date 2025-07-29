@@ -2,18 +2,15 @@
 {
     static void Main()
     {
-        IDevice sony = new SonyTV();
-        RemoteControl remote = new AdvancedRemoteControl(sony);
-        remote.TurnOn();
-        remote.SetChannel(5);
-        remote.TurnOff();
+        var forest = new List<Tree>();
 
-        Console.WriteLine();
+        forest.Add(new Tree(10, 20, TreeFactory.GetTreeType("松树", "绿色", "粗糙")));
+        forest.Add(new Tree(15, 25, TreeFactory.GetTreeType("松树", "绿色", "粗糙")));
+        forest.Add(new Tree(30, 40, TreeFactory.GetTreeType("橡树", "深绿色", "光滑")));
 
-        IDevice samsung = new SamsungTV();
-        remote = new AdvancedRemoteControl(samsung);
-        remote.TurnOn();
-        remote.SetChannel(99);
-        remote.TurnOff();
+        foreach (var tree in forest)
+        {
+            tree.Draw();
+        }
     }
 }
