@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:vm="clr-namespace:AvaloniaApplication4.ViewModels"
+             x:Class="AvaloniaApplication4.Views.TestView"
+             x:DataType="vm:TestViewModel"
+             mc:Ignorable="d">
+
+	<Grid RowDefinitions="Auto,*,Auto">
+		<!-- 顶部按钮 -->
+		<StackPanel Orientation="Horizontal" Margin="10" Spacing="10" VerticalAlignment="Center">
+			<ToggleButton Content="自动跟随最新" IsChecked="{Binding AutoScroll, Mode=TwoWay}" Width="140" />
+			<ToggleButton Content="XS" IsChecked="{Binding XSSelected, Mode=TwoWay}" Width="60" />
+			<ToggleButton Content="YS" IsChecked="{Binding YSSelected, Mode=TwoWay}" Width="60" />
+			<ToggleButton Content="ZS" IsChecked="{Binding ZSSelected, Mode=TwoWay}" Width="60" />
+
+			<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+				<TextBlock Text="XS:" FontWeight="Bold" VerticalAlignment="Center" />
+				<TextBlock Text="{Binding SelectedPoint.XS, StringFormat='{}{0:F2}'}" Width="50" Foreground="DodgerBlue" FontWeight="Bold" />
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+				<TextBlock Text="YS:" FontWeight="Bold" VerticalAlignment="Center" />
+				<TextBlock Text="{Binding SelectedPoint.YS, StringFormat='{}{0:F2}'}" Width="50" Foreground="OrangeRed" FontWeight="Bold" />
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+				<TextBlock Text="ZS:" FontWeight="Bold" VerticalAlignment="Center" />
+				<TextBlock Text="{Binding SelectedPoint.ZS, StringFormat='{}{0:F2}'}" Width="50" Foreground="MediumSeaGreen" FontWeight="Bold" />
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+				<TextBlock Text="时间:" FontWeight="Bold" VerticalAlignment="Center" />
+				<TextBlock Text="{Binding SelectedPoint.UpdateTimeWithLog}" Width="95" FontWeight="Bold" />
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+				<TextBlock Text="备注:" FontWeight="Bold" VerticalAlignment="Center" />
+				<TextBox x:Name="textBox_updateNote" Width="120"/>
+				<Button Content="更新备注" Width="100" Height="30" Background="#0078D4" Foreground="White" BorderBrush="#2980b9" BorderThickness="2" FontWeight="SemiBold" Click="UpdateNoteButton_Click" />
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+				<TextBlock Text="选择起重机:" VerticalAlignment="Center" />
+				<ComboBox Width="120"
+						  ItemsSource="{Binding AvailableCraneCodes}"
+						  SelectedItem="{Binding SelectedCraneCode, Mode=TwoWay}" />
+			</StackPanel>
+
+
+
+		</StackPanel>
+
+		
+
+		<!-- 图表 -->
+		<lvc:CartesianChart Grid.Row="1"
+							x:Name="Chart"
+                            Series="{Binding Series}"
+                            XAxes="{Binding XAxes}"
+                            YAxes="{Binding YAxes}"
+                            LegendPosition="Top"
+                            TooltipPosition="Top"
+                            ZoomMode="X"
+                            />
+	</Grid>
+</UserControl>

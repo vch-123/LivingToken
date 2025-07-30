@@ -1,0 +1,148 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:vm="clr-namespace:AvaloniaApplication4.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AvaloniaApplication4.Views.LogThreeView"
+			 xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+             x:DataType="vm:LogThreeViewModel">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="50"/>
+			<RowDefinition Height="50"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+
+		<!-- 第一行：日志文件控制区 -->
+		<UniformGrid Columns="1" Grid.Row="0">
+			<StackPanel Margin="10" Orientation="Horizontal" Spacing="15" VerticalAlignment="Center">
+				<Button Content="选择日志文件" Click="OnSelectLogFileButtonClick" Width="150" Height="40"
+						Background="#0078D4"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						FontSize="14"
+					 Foreground="White" BorderBrush="#2980b9" BorderThickness="2" FontWeight="SemiBold"/>
+
+				<TextBlock Text="{Binding SelectedFileName}" FontSize="16" Foreground="Gray" VerticalAlignment="Center" />
+				<TextBlock Text="{Binding StatusMessage}" FontSize="14" Foreground="DarkGreen" VerticalAlignment="Center" />
+
+				<!-- XS YS ZS 切换按钮 -->
+				<StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+					<ToggleButton Content="XS" IsChecked="{Binding XSSelected, Mode=TwoWay}" Width="60" />
+					<ToggleButton Content="YS" IsChecked="{Binding YSSelected, Mode=TwoWay}" Width="60" />
+					<ToggleButton Content="ZS" IsChecked="{Binding ZSSelected, Mode=TwoWay}" Width="60" />
+				</StackPanel>
+
+				<!-- 时间段选择 -->
+				<ComboBox ItemsSource="{Binding SplitTimeSpanModels}"
+						  SelectedItem="{Binding SelectedTimeSpanModel, Mode=TwoWay}"
+						  Width="180" VerticalAlignment="Center">
+					<ComboBox.ItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding Display}" />
+						</DataTemplate>
+					</ComboBox.ItemTemplate>
+					<ComboBox.SelectionBoxItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding Display}" />
+						</DataTemplate>
+					</ComboBox.SelectionBoxItemTemplate>
+				</ComboBox>
+
+				<Button Content="绘制" Command="{Binding DrawCommand}" Width="100" Height="40"
+						Margin="10,0,0,0"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						FontSize="14"
+					Background="#0078D4" Foreground="White" BorderBrush="#2980b9" BorderThickness="2" FontWeight="SemiBold"/>
+			</StackPanel>
+		</UniformGrid>
+
+		<!-- 第二行：任务日志控制区 -->
+		<UniformGrid Columns="1" Grid.Row="1">
+			<StackPanel Margin="10" Orientation="Horizontal" Spacing="15" VerticalAlignment="Center">
+				<Button Content="选择任务日志文件" Click="OnSelectTaskLogFileButtonClick" Width="150" Height="40"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						FontSize="14"
+					Background="#0078D4" Foreground="White" BorderBrush="#2980b9" BorderThickness="2" FontWeight="SemiBold"/>
+
+				<TextBlock Text="{Binding SelectedTaskLogFileName}" FontSize="16" Foreground="Gray" VerticalAlignment="Center" />
+				<TextBlock Text="{Binding TaskLogStatusMessage}" FontSize="14" Foreground="DarkGreen" VerticalAlignment="Center" />
+
+				<Button Content="生成日志图像" Click="OnDrawTaskClick" Width="200" Height="40"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						FontSize="14"
+					Background="#0078D4" Foreground="White" BorderBrush="#2980b9" BorderThickness="2" FontWeight="SemiBold"/>
+
+				<ComboBox ItemsSource="{Binding LogModels}"
+						  SelectedItem="{Binding SelectedLogModel, Mode=TwoWay}"
+						  Width="200" VerticalAlignment="Center">
+					<ComboBox.ItemTemplate>
+						<DataTemplate>
+							<StackPanel Orientation="Horizontal" Spacing="4" MinWidth="820">
+								<TextBlock Text="{Binding Display}" Foreground="Gray"/>
+							</StackPanel>
+						</DataTemplate>
+					</ComboBox.ItemTemplate>
+					<ComboBox.SelectionBoxItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding Display}" />
+						</DataTemplate>
+					</ComboBox.SelectionBoxItemTemplate>
+				</ComboBox>
+
+				<Button Content="定位" Command="{Binding LocateCommand}" Width="80" Height="40"
+						Margin="10,0,0,0"
+						HorizontalContentAlignment="Center"
+						VerticalContentAlignment="Center"
+						FontSize="14"
+					Background="#0078D4" Foreground="White" BorderBrush="#2980b9" BorderThickness="2" FontWeight="SemiBold"/>
+			</StackPanel>
+		</UniformGrid>
+		<!-- 下方图表和横坐标编辑 -->
+		<Grid Grid.Row="2">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="*"/>
+				<RowDefinition Height="*"/>
+				<RowDefinition Height="*"/>
+			</Grid.RowDefinitions>
+			
+			<lvc:CartesianChart
+			Grid.Row="0"
+            Series="{Binding XSeries}"
+            XAxes="{Binding XAxes}"
+            YAxes="{Binding YAxes}"
+            LegendPosition="Top"
+            TooltipPosition="Top"
+            ZoomMode="X"
+            x:Name="xchart"
+			/>
+
+			<lvc:CartesianChart
+			Grid.Row="1"
+            Series="{Binding YSeries}"
+            XAxes="{Binding XAxes}"
+            YAxes="{Binding YAxes}"
+            LegendPosition="Top"
+            TooltipPosition="Top"
+            ZoomMode="X"
+            x:Name="ychart"
+			/>
+
+			<lvc:CartesianChart
+			Grid.Row="2"
+            Series="{Binding ZSeries}"
+            XAxes="{Binding XAxes}"
+            YAxes="{Binding YAxes}"
+            LegendPosition="Top"
+            TooltipPosition="Top"
+            ZoomMode="X"
+            x:Name="zchart"
+			/>
+		</Grid>
+		
+	</Grid>
+</UserControl>
