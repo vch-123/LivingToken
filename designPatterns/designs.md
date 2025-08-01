@@ -46,7 +46,7 @@
 
 | 模式                                  | 作用                             |
 | :------------------------------------ | -------------------------------- |
-| 空对象模式                            |                                  |
+| **空对象模式**                        |                                  |
 | **Chain of Responsibility（责任链）** | 让多个对象处理请求               |
 | **Command（命令）**                   | 将请求封装为命令对象             |
 | **Interpreter（解释器）**             | 实现语言文法解释器               |
@@ -69,7 +69,7 @@
 | ------ | ---- | ------------------------------------------------------------ |
 | 创建型 | 5    | Singleton, Factory Method, Abstract Factory, Builder, Prototype |
 | 结构型 | 7    | Adapter, Bridge, Composite, Decorator, Facade, Flyweight, Proxy |
-| 行为型 | 11   | Chain of Responsibility, Command, Interpreter, Iterator, Mediator, Memento, Observer, State, Strategy, Template Method, Visitor |
+| 行为型 | 12   | Chain of Responsibility, Command, Interpreter, Iterator, Mediator, Memento, Observer, State, Strategy, Template Method, Visitor |
 
 👉 **合计：23种经典设计模式**
 
