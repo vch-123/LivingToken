@@ -1,0 +1,453 @@
+﻿// ===== 文件: Program.cs =====
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System.Text;
+using TaskBoneStudy;
+using TaskBoneStudy.Command;
+using TaskBoneStudy.Service;
+
+var host = Host.CreateDefaultBuilder()
+    .ConfigureServices((context, services) =>
+    {
+        // 注册服务
+        services.AddSingleton<IDeviceLogger, DeviceLogger>();
+        services.AddSingleton<TaskManager>();
+
+        // 注册命令（命令支持注入）
+        services.AddTransient<CraneVerifyOrder>();
+        services.AddTransient<CraneWalk>();
+        services.AddTransient<CraneGet>();
+        services.AddTransient<CranePut>();
+        services.AddTransient<CraneFinishOrder>();
+    })
+    .Build();
+
+Console.OutputEncoding = Encoding.UTF8;
+Console.WriteLine("🛠 起重机任务系统启动中...");
+
+var taskManager = host.Services.GetRequiredService<TaskManager>();
+taskManager.InitTasks(new List<string> { "Crane_01", "Crane_02", "Crane_03", "Crane_04" });
+
+Console.WriteLine("✅ 正在运行，按任意键退出...");
+Console.ReadKey();
+
+taskManager.StopAll();
+Console.WriteLine("🛑 所有任务已停止");
+
+
+// ===== 文件: TaskBoneStudy.csproj =====
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.8" />
+  </ItemGroup>
+
+</Project>
+
+
+// ===== 文件: TaskManager.cs =====
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TaskBoneStudy.Command;
+using TaskBoneStudy.Model;
+
+namespace TaskBoneStudy;
+
+public class TaskManager
+{
+    private readonly IServiceProvider _provider;
+    private readonly Dictionary<string, CraneTaskModel> _taskMap = new();
+    private readonly Dictionary<string, CancellationTokenSource> _cancellationMap = new();
+
+    public TaskManager(IServiceProvider provider)
+    {
+        _provider = provider;
+    }
+
+    public void InitTasks(List<string> deviceCodes)
+    {
+        foreach (var code in deviceCodes)
+        {
+            var model = new CraneTaskModel
+            {
+                Code = code,
+                TaskCommand = _provider.GetRequiredService<CraneVerifyOrder>()
+            };
+            _taskMap[code] = model;
+
+            var cts = new CancellationTokenSource();
+            _cancellationMap[code] = cts;
+
+            StartTaskLoop(model, cts.Token);
+        }
+    }
+
+    private void StartTaskLoop(CraneTaskModel model, CancellationToken token)
+    {
+        Console.WriteLine($"[{model.Code}] 🚀 启动任务线程");
+
+        Task.Run(async () =>
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    model.TaskCommand = await model.TaskCommand.ExecuteAsync(model, token);
+                    await Task.Delay(50);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[{model.Code}] ❌ 错误: {ex.Message}");
+                    break;
+                }
+            }
+        }, token);
+    }
+
+    public void StopAll()
+    {
+        foreach (var cts in _cancellationMap.Values)
+        {
+            cts.Cancel();
+        }
+    }
+}
+
+
+
+
+// ===== 文件: CraneFinishOrder.cs =====
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TaskBoneStudy.Helper;
+using TaskBoneStudy.Model;
+using TaskBoneStudy.Service;
+
+namespace TaskBoneStudy.Command;
+
+public class CraneFinishOrder : ITaskCommand<CraneTaskModel>
+{
+    private readonly IDeviceLogger _logger;
+    private readonly CraneVerifyOrder _next;
+
+    public CraneFinishOrder(IDeviceLogger logger, CraneVerifyOrder next)
+    {
+        _logger = logger;
+        _next = next;
+    }
+    public async Task<ITaskCommand<CraneTaskModel>> ExecuteAsync(CraneTaskModel model, CancellationToken token)
+    {
+        await SleepHelper.DelayRandom();
+        _logger.Log(model.Code, nameof(CraneFinishOrder));
+        Console.WriteLine($"[{model.Code}] ✅ 任务完成，共执行 {model.StepCounter} 步");
+        model.StepCounter = 0;
+        return _next;
+    }
+}
+
+// ===== 文件: CraneGet.cs =====
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TaskBoneStudy.Helper;
+using TaskBoneStudy.Model;
+using TaskBoneStudy.Service;
+
+namespace TaskBoneStudy.Command;
+
+public class CraneGet : ITaskCommand<CraneTaskModel>
+{
+
+    private readonly IDeviceLogger _logger;
+    private readonly CranePut _next;
+
+    public CraneGet(IDeviceLogger logger, CranePut next)
+    {
+        _logger = logger;
+        _next = next;
+    }
+
+    public async Task<ITaskCommand<CraneTaskModel>> ExecuteAsync(CraneTaskModel model, CancellationToken token)
+    {
+        await SleepHelper.DelayRandom();
+        _logger.Log(model.Code, nameof(CranePut));
+        Console.WriteLine($"[{model.Code}] 📤 抓料中 - 第{model.StepCounter++}步");
+        return _next;
+    }
+}
+
+
+// ===== 文件: CranePut.cs =====
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TaskBoneStudy.Helper;
+using TaskBoneStudy.Model;
+using TaskBoneStudy.Service;
+
+namespace TaskBoneStudy.Command;
+
+public class CranePut : ITaskCommand<CraneTaskModel>
+{
+    private readonly IDeviceLogger _logger;
+    private readonly CraneFinishOrder _next;
+
+    public CranePut(IDeviceLogger logger, CraneFinishOrder next)
+    {
+        _logger = logger;
+        _next = next;
+    }
+    public async Task<ITaskCommand<CraneTaskModel>> ExecuteAsync(CraneTaskModel model, CancellationToken token)
+    {
+        await SleepHelper.DelayRandom();
+        _logger.Log(model.Code, nameof(CranePut));
+        Console.WriteLine($"[{model.Code}] 📤 放料中 - 第{model.StepCounter++}步");
+        return _next;
+    }
+}
+
+
+// ===== 文件: CraneVerifyOrder.cs =====
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TaskBoneStudy.Helper;
+using TaskBoneStudy.Model;
+using TaskBoneStudy.Service;
+
+namespace TaskBoneStudy.Command;
+
+public class CraneVerifyOrder : ITaskCommand<CraneTaskModel>
+{
+    private readonly IDeviceLogger _logger;
+    private readonly CraneWalk _next;
+
+    public CraneVerifyOrder(IDeviceLogger logger, CraneWalk next)
+    {
+        _logger = logger;
+        _next = next;
+    }
+
+    public async Task<ITaskCommand<CraneTaskModel>> ExecuteAsync(CraneTaskModel model, CancellationToken token)
+    {
+        await SleepHelper.DelayRandom();
+        _logger.Log(model.Code, nameof(CraneVerifyOrder));
+        Console.WriteLine($"[{model.Code}] ✔ 验证任务 - 第{model.StepCounter++}步");
+        return _next;
+    }
+}
+
+
+
+
+// ===== 文件: CraneWalk.cs =====
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TaskBoneStudy.Helper;
+using TaskBoneStudy.Model;
+using TaskBoneStudy.Service;
+
+namespace TaskBoneStudy.Command;
+
+public class CraneWalk : ITaskCommand<CraneTaskModel>
+{
+    private readonly IDeviceLogger _logger;
+    private readonly CraneGet _next;
+
+    public CraneWalk(IDeviceLogger logger, CraneGet next)
+    {
+        _logger = logger;
+        _next = next;
+    }
+
+    public async Task<ITaskCommand<CraneTaskModel>> ExecuteAsync(CraneTaskModel model, CancellationToken token)
+    {
+        await SleepHelper.DelayRandom();
+        _logger.Log(model.Code, nameof(CraneWalk));
+        Console.WriteLine($"[{model.Code}] 🚶 设备走行 - 第{model.StepCounter++}步");
+        return _next;
+    }
+}
+
+
+// ===== 文件: SleepHelper.cs =====
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TaskBoneStudy.Helper;
+
+public static class SleepHelper
+{
+    public static Task DelayRandom(int minMs = 100, int maxMs = 300)
+    {
+        return Task.Delay(Random.Shared.Next(minMs, maxMs + 1));
+    }
+}
+
+
+// ===== 文件: ITaskCommand.cs =====
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TaskBoneStudy.Interface;
+
+public interface ITaskCommand<T> where T : ITaskModel
+{
+    Task<ITaskCommand<T>> ExecuteAsync(T model, CancellationToken token);
+}
+
+public interface ITaskModel
+{
+    string Code { get; set; }
+}
+
+
+// ===== 文件: CraneTaskModel.cs =====
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TaskBoneStudy.Model;
+
+public interface ITaskCommand<T> where T : ITaskModel
+{
+    Task<ITaskCommand<T>> ExecuteAsync(T model, CancellationToken token);
+}
+
+public interface ITaskModel
+{
+    string Code { get; set; }
+}
+
+// === 模型定义 ===
+public class CraneTaskModel : ITaskModel
+{
+    public string Code { get; set; }
+    public ITaskCommand<CraneTaskModel> TaskCommand { get; set; }
+    public int StepCounter { get; set; } = 0;
+}
+
+// ===== 文件: IDeviceLogger.cs =====
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TaskBoneStudy.Service;
+
+public interface IDeviceLogger
+{
+    void Log(string deviceCode, string commandName);
+}
+
+
+public class DeviceLogger : IDeviceLogger
+{
+    private readonly object _lock = new();
+
+    public void Log(string deviceCode, string commandName)
+    {
+        try
+        {
+            var now = DateTime.Now;
+            var logDir = Path.Combine(AppContext.BaseDirectory, "logs");
+
+            if (!Directory.Exists(logDir))
+                Directory.CreateDirectory(logDir);
+
+            var fileName = $"{deviceCode}_{now:yyyyMMdd}.log";
+            var filePath = Path.Combine(logDir, fileName);
+
+            var logLine = $"{now:yyyy-MM-dd HH:mm:ss} | {commandName}";
+
+            lock (_lock)
+            {
+                File.AppendAllText(filePath, logLine + Environment.NewLine, Encoding.UTF8);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"日志写入失败：{ex.Message}");
+        }
+    }
+}
+
+
+// ===== 文件: .NETCoreApp,Version=v8.0.AssemblyAttributes.cs =====
+// <autogenerated />
+using System;
+using System.Reflection;
+[assembly: global::System.Runtime.Versioning.TargetFrameworkAttribute(".NETCoreApp,Version=v8.0", FrameworkDisplayName = ".NET 8.0")]
+
+
+// ===== 文件: TaskBoneStudy.AssemblyInfo.cs =====
+//------------------------------------------------------------------------------
+// <auto-generated>
+//     This code was generated by a tool.
+//     Runtime Version:4.0.30319.42000
+//
+//     Changes to this file may cause incorrect behavior and will be lost if
+//     the code is regenerated.
+// </auto-generated>
+//------------------------------------------------------------------------------
+
+using System;
+using System.Reflection;
+
+[assembly: System.Reflection.AssemblyCompanyAttribute("TaskBoneStudy")]
+[assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4550e5892fb6d8995bc3687c4caa83067ca1df66")]
+[assembly: System.Reflection.AssemblyProductAttribute("TaskBoneStudy")]
+[assembly: System.Reflection.AssemblyTitleAttribute("TaskBoneStudy")]
+[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
+
+// Generated by the MSBuild WriteCodeFragment class.
+
+
+
+// ===== 文件: TaskBoneStudy.GlobalUsings.g.cs =====
+// <auto-generated/>
+global using global::System;
+global using global::System.Collections.Generic;
+global using global::System.IO;
+global using global::System.Linq;
+global using global::System.Net.Http;
+global using global::System.Threading;
+global using global::System.Threading.Tasks;
+
+
